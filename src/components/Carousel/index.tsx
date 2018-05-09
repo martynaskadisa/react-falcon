@@ -15,6 +15,7 @@ export interface IProps {
   className?: string;
   loop?: boolean;
   animate?: boolean;
+  slideThreshold?: number;
 }
 
 interface IState {
@@ -24,10 +25,12 @@ interface IState {
   startX?: number;
   offset: number;
   transitionStart: number;
+  transitionStartOffset: number;
   nextIndex: number;
+  slideWidth: number;
 }
 
-const ANIMATION_DURATION = 250;
+const ANIMATION_DURATION = 100;
 
 class Carousel extends React.PureComponent<IProps, IState> {
   public static defaultProps: Partial<IProps> = {
@@ -35,8 +38,12 @@ class Carousel extends React.PureComponent<IProps, IState> {
     defaultIndex: 0,
     loop: false,
     onChange: noop,
-    overscanCount: 3
+    overscanCount: 3,
+    slideThreshold: 75
   };
+
+  private currentSlideRef = React.createRef<HTMLDivElement>();
+  private rAFHandle: number;
 
   constructor(props: Required<IProps>) {
     super(props);
@@ -47,11 +54,16 @@ class Carousel extends React.PureComponent<IProps, IState> {
       isTransitioning: false,
       nextIndex: -1,
       offset: 0,
+      slideWidth: -1,
       startX: undefined,
-      transitionStart: 0
+      transitionStart: 0,
+      transitionStartOffset: 0
     };
 
     this.handleMouseDown = this.handleMouseDown.bind(this);
+    this.handleTouchStart = this.handleTouchStart.bind(this);
+    this.handleTouchEnd = this.handleTouchEnd.bind(this);
+    this.handleTouchMove = this.handleTouchMove.bind(this);
     this.handleMouseUp = this.handleMouseUp.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.transition = this.transition.bind(this);
@@ -60,7 +72,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
   public render() {
     const { children, overscanCount, className, style, loop } = this
       .props as Required<IProps>;
-    const { index, offset } = this.state;
+    const { index, offset, isInteracting } = this.state;
 
     const visibleChildren = getVisibleChildren(
       children,
@@ -71,13 +83,19 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
     return (
       <div
+        ref={this.currentSlideRef}
         style={{
+          cursor: isInteracting ? 'grabbing' : 'grab',
           display: 'block',
-          // overflow: 'hidden',
+          overflow: 'hidden',
           position: 'relative',
+          touchAction: 'pan-y',
           ...style
         }}
         className={className}
+        onTouchStart={this.handleTouchStart}
+        onTouchEnd={this.handleTouchEnd}
+        onTouchMove={this.handleTouchMove}
         onMouseDown={this.handleMouseDown}
         onMouseUp={this.handleMouseUp}
         onMouseOut={this.handleMouseUp}
@@ -89,6 +107,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
             style={{
               height: '100%',
               left: `calc(${100 * (i - 1)}% + ${offset}px)`,
+              pointerEvents: 'none',
               position: 'absolute',
               width: '100%'
             }}
@@ -100,12 +119,62 @@ class Carousel extends React.PureComponent<IProps, IState> {
     );
   }
 
+  private handleInteractionStart(startX: number): void {
+    if (this.state.isTransitioning) {
+      window.cancelAnimationFrame(this.rAFHandle);
+      return this.setState({
+        isInteracting: true,
+        offset: this.state.offset,
+        startX: this.state.offset
+      });
+    }
+
+    this.setState({ isInteracting: true, startX, offset: 0 });
+  }
+
+  private handleInteractionEnd() {
+    if (!this.state.isInteracting) {
+      return;
+    }
+
+    this.slideTo(this.getNextIndex());
+  }
+
+  private handleInteractionMove(x: number): void {
+    if (!this.state.isInteracting || !this.state.startX) {
+      return;
+    }
+
+    this.setState({ offset: x - this.state.startX });
+  }
+
+  private handleTouchStart(e: React.TouchEvent<HTMLDivElement>): void {
+    this.handleInteractionStart(e.touches[0].clientX);
+  }
+
   private handleMouseDown(e: React.MouseEvent<HTMLDivElement>): void {
-    this.setState({ isInteracting: true, startX: e.clientX, offset: 0 });
+    this.handleInteractionStart(e.clientX);
+  }
+
+  private handleTouchEnd(e: React.TouchEvent<HTMLDivElement>): void {
+    this.handleInteractionEnd();
+  }
+
+  private handleMouseUp(e: React.MouseEvent<HTMLDivElement>): void {
+    this.handleInteractionEnd();
+  }
+
+  private handleTouchMove(e: React.TouchEvent<HTMLDivElement>): void {
+    this.handleInteractionMove(e.touches[0].clientX);
+  }
+
+  private handleMouseMove(e: React.MouseEvent<HTMLDivElement>): void {
+    this.handleInteractionMove(e.clientX);
   }
 
   private getNextIndex() {
-    if (this.state.offset >= 50) {
+    const { slideThreshold } = this.props as Required<IProps>;
+    if (this.state.offset >= slideThreshold) {
       if (this.state.index === 0) {
         return this.props.loop
           ? React.Children.count(this.props.children) - 1
@@ -115,7 +184,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
       return this.state.index - 1;
     }
 
-    if (this.state.offset <= -50) {
+    if (this.state.offset <= -slideThreshold) {
       if (this.state.index === React.Children.count(this.props.children) - 1) {
         return this.props.loop ? 0 : this.state.index;
       }
@@ -127,7 +196,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private slideTo(index: number) {
-    if (!this.props.animate) {
+    if (!this.props.animate || !this.currentSlideRef.current) {
       return this.setState({
         index,
         isInteracting: false,
@@ -136,15 +205,19 @@ class Carousel extends React.PureComponent<IProps, IState> {
       });
     }
 
+    const rect = this.currentSlideRef.current.getBoundingClientRect();
+
     this.setState(
       {
         isInteracting: false,
         isTransitioning: true,
         nextIndex: index,
-        transitionStart: window.performance.now()
+        slideWidth: rect.width,
+        transitionStart: window.performance.now(),
+        transitionStartOffset: this.state.offset
       },
       () => {
-        window.requestAnimationFrame(this.transition);
+        this.rAFHandle = window.requestAnimationFrame(this.transition);
       }
     );
   }
@@ -155,6 +228,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
     }
 
     const now = window.performance.now();
+    // console.log(now);
 
     if (now - this.state.transitionStart > ANIMATION_DURATION) {
       return this.setState({
@@ -165,39 +239,20 @@ class Carousel extends React.PureComponent<IProps, IState> {
       });
     }
 
-    const direction =
-      this.state.index - this.state.nextIndex > 0 ? 'right' : 'left';
+    const transitionOffset =
+      this.state.index === this.state.nextIndex
+        ? this.state.transitionStartOffset
+        : this.state.transitionStartOffset - this.state.slideWidth;
 
-    console.log(direction);
-    const amount = this.state.offset * (16.7 / ANIMATION_DURATION);
+    const progress = (now - this.state.transitionStart) / ANIMATION_DURATION;
+    const amount = transitionOffset * progress;
+
+    const offset = this.state.transitionStartOffset - amount;
 
     this.setState(
-      {
-        offset:
-          direction === 'left'
-            ? this.state.offset + amount
-            : this.state.offset - amount
-      },
-      () => window.requestAnimationFrame(this.transition)
+      { offset },
+      () => (this.rAFHandle = window.requestAnimationFrame(this.transition))
     );
-  }
-
-  private handleMouseUp(e: React.MouseEvent<HTMLDivElement>): void {
-    if (!this.state.isInteracting) {
-      return;
-    }
-
-    this.slideTo(this.getNextIndex());
-  }
-
-  private handleMouseMove(e: React.MouseEvent<HTMLDivElement>): void {
-    if (!this.state.isInteracting || !this.state.startX) {
-      return;
-    }
-
-    const offset = e.clientX - this.state.startX;
-
-    this.setState({ offset });
   }
 }
 

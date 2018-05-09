@@ -28,3 +28,7 @@ export const getVisibleChildren = (
     activeIndex - 1 + overscanCount
   );
 };
+
+export const getTransitionOffset = (currentOffset: number, width: number) => {
+  return width - currentOffset;
+};
