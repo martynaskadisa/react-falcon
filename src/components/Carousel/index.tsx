@@ -30,7 +30,7 @@ interface IState {
   slideWidth: number;
 }
 
-const ANIMATION_DURATION = 100;
+const ANIMATION_DURATION = 250;
 
 class Carousel extends React.PureComponent<IProps, IState> {
   public static defaultProps: Partial<IProps> = {
@@ -106,9 +106,9 @@ class Carousel extends React.PureComponent<IProps, IState> {
             key={i}
             style={{
               height: '100%',
-              left: `calc(${100 * (i - 1)}% + ${offset}px)`,
               pointerEvents: 'none',
               position: 'absolute',
+              transform: `translateX(calc(${100 * (i - 1)}% + ${offset}px))`,
               width: '100%'
             }}
           >
@@ -228,7 +228,6 @@ class Carousel extends React.PureComponent<IProps, IState> {
     }
 
     const now = window.performance.now();
-    // console.log(now);
 
     if (now - this.state.transitionStart > ANIMATION_DURATION) {
       return this.setState({

@@ -50,7 +50,24 @@ const ConnectedImageCarousel: React.SFC = () => (
   </Carousel>
 );
 
-class App extends React.Component {
+const createArray = (length: number): undefined[] =>
+  Array.apply(null, { length }) as undefined[];
+
+interface IState {
+  count: number;
+}
+
+class App extends React.Component<{}, IState> {
+  public state: IState = {
+    count: 3
+  };
+
+  constructor(props: {}) {
+    super(props);
+
+    this.handleClick = this.handleClick.bind(this);
+  }
+
   public render() {
     return (
       <div className="App">
@@ -58,11 +75,18 @@ class App extends React.Component {
           <img src={logo} className="App-logo" alt="logo" />
         </header>
         <div className="App-body">
+          <button onClick={this.handleClick}>Add 10</button>
+          {createArray(this.state.count).map((_, i) => (
+            <ConnectedImageCarousel key={i} />
+          ))}
           <ConnectedColorCarousel />
-          <ConnectedImageCarousel />
         </div>
       </div>
     );
+  }
+
+  private handleClick() {
+    this.setState({ count: this.state.count + 10 });
   }
 }
 
