@@ -238,10 +238,14 @@ class Carousel extends React.PureComponent<IProps, IState> {
       });
     }
 
+    const direction = this.state.transitionStartOffset > 0 ? 'left' : 'right';
+
     const transitionOffset =
       this.state.index === this.state.nextIndex
         ? this.state.transitionStartOffset
-        : this.state.transitionStartOffset - this.state.slideWidth;
+        : direction === 'left'
+          ? this.state.transitionStartOffset - this.state.slideWidth
+          : this.state.transitionStartOffset + this.state.slideWidth;
 
     const progress = (now - this.state.transitionStart) / ANIMATION_DURATION;
     const amount = transitionOffset * progress;
