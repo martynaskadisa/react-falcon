@@ -14,13 +14,15 @@ function* colorGenerator() {
 
 function* imageGenerator() {
   while (true) {
-    yield `https://source.unsplash.com/random/400x300?v=${Math.random()}`;
+    yield `https://source.unsplash.com/random/40${Math.round(
+      Math.random() * 10
+    )}x30${Math.round(Math.random() * 10)}?v=${Math.random()}`;
   }
 }
 
 const getImage = imageGenerator();
 const getColor = colorGenerator();
-const colors = (Array.apply(null, { length: 7 }) as undefined[]).map(
+const colors = (Array.apply(null, { length: 1000 }) as undefined[]).map(
   () => getColor.next().value
 );
 
@@ -29,7 +31,7 @@ const images = (Array.apply(null, { length: 7 }) as undefined[]).map(
 );
 
 const ConnectedColorCarousel: React.SFC = () => (
-  <Carousel style={{ width: 300, height: 300 }} loop={true}>
+  <Carousel style={{ width: 300, height: 300 }}>
     {colors.map((color, i) => (
       <ColorSlide key={i} color={color}>
         {i}
@@ -44,7 +46,7 @@ const ConnectedImageCarousel: React.SFC = () => (
       <img
         src={image}
         key={i}
-        style={{ OObjectFit: 'cover', width: '100%', height: '100%' }}
+        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
       />
     ))}
   </Carousel>
@@ -77,9 +79,9 @@ class App extends React.Component<{}, IState> {
         <div className="App-body">
           <button onClick={this.handleClick}>Add 10</button>
           {createArray(this.state.count).map((_, i) => (
-            <ConnectedImageCarousel key={i} />
+            <ConnectedColorCarousel key={i} />
           ))}
-          <ConnectedColorCarousel />
+          <ConnectedImageCarousel />
         </div>
       </div>
     );

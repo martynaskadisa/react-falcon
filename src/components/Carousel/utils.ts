@@ -1,5 +1,8 @@
 import * as React from 'react';
 
+// tslint:disable-next-line:no-empty
+export const noop = () => {};
+
 export const getVisibleChildren = (
   children: React.ReactNode,
   activeIndex: number,
@@ -29,6 +32,19 @@ export const getVisibleChildren = (
   );
 };
 
-export const getTransitionOffset = (currentOffset: number, width: number) => {
-  return width - currentOffset;
+export const calculateTransitionOffset = (
+  index: number,
+  nextIndex: number,
+  startOffset: number,
+  width: number
+) => {
+  if (index === nextIndex) {
+    return startOffset;
+  }
+
+  if (startOffset > 0) {
+    return startOffset - width;
+  }
+
+  return startOffset + width;
 };

@@ -15,7 +15,10 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "strictPropertyInitialization": false,
+    "strictFunctionTypes": true,
+    "noUnusedParameters": true
   },
   "exclude": [
     "node_modules",

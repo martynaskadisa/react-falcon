@@ -1,9 +1,5 @@
-// tslint:disable:no-console
-// tslint:disable:no-debugger
-
 import * as React from 'react';
-import { noop } from './noop';
-import { getVisibleChildren } from './utils';
+import { calculateTransitionOffset, getVisibleChildren, noop } from './utils';
 
 export interface IProps {
   defaultIndex?: number;
@@ -16,6 +12,12 @@ export interface IProps {
   loop?: boolean;
   animate?: boolean;
   slideThreshold?: number;
+  /**
+   * Allows providing custom easing function
+   *
+   * defaults to linear easing `(f) => f`
+   */
+  easing?: (progress: number) => number;
 }
 
 interface IState {
@@ -32,14 +34,17 @@ interface IState {
 
 const ANIMATION_DURATION = 250;
 
+const linearEasing = (t: number) => t;
+
 class Carousel extends React.PureComponent<IProps, IState> {
   public static defaultProps: Partial<IProps> = {
     animate: true,
     defaultIndex: 0,
+    easing: linearEasing,
     loop: false,
     onChange: noop,
     overscanCount: 3,
-    slideThreshold: 75
+    slideThreshold: 50
   };
 
   private currentSlideRef = React.createRef<HTMLDivElement>();
@@ -72,7 +77,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
   public render() {
     const { children, overscanCount, className, style, loop } = this
       .props as Required<IProps>;
-    const { index, offset, isInteracting } = this.state;
+    const { index, offset, isInteracting, isTransitioning } = this.state;
 
     const visibleChildren = getVisibleChildren(
       children,
@@ -90,6 +95,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
           overflow: 'hidden',
           position: 'relative',
           touchAction: 'pan-y',
+          willChange:
+            isInteracting || isTransitioning ? 'transform' : undefined,
           ...style
         }}
         className={className}
@@ -108,7 +115,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
               height: '100%',
               pointerEvents: 'none',
               position: 'absolute',
-              transform: `translateX(calc(${100 * (i - 1)}% + ${offset}px))`,
+              transform: `translate3d(calc(${100 *
+                (i - 1)}% + ${offset}px), 0, 0)`,
               width: '100%'
             }}
           >
@@ -156,11 +164,11 @@ class Carousel extends React.PureComponent<IProps, IState> {
     this.handleInteractionStart(e.clientX);
   }
 
-  private handleTouchEnd(e: React.TouchEvent<HTMLDivElement>): void {
+  private handleTouchEnd(): void {
     this.handleInteractionEnd();
   }
 
-  private handleMouseUp(e: React.MouseEvent<HTMLDivElement>): void {
+  private handleMouseUp(): void {
     this.handleInteractionEnd();
   }
 
@@ -216,9 +224,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
         transitionStart: window.performance.now(),
         transitionStartOffset: this.state.offset
       },
-      () => {
-        this.rAFHandle = window.requestAnimationFrame(this.transition);
-      }
+      () => (this.rAFHandle = window.requestAnimationFrame(this.transition))
     );
   }
 
@@ -238,17 +244,16 @@ class Carousel extends React.PureComponent<IProps, IState> {
       });
     }
 
-    const direction = this.state.transitionStartOffset > 0 ? 'left' : 'right';
+    const transitionOffset = calculateTransitionOffset(
+      this.state.index,
+      this.state.nextIndex,
+      this.state.transitionStartOffset,
+      this.state.slideWidth
+    );
 
-    const transitionOffset =
-      this.state.index === this.state.nextIndex
-        ? this.state.transitionStartOffset
-        : direction === 'left'
-          ? this.state.transitionStartOffset - this.state.slideWidth
-          : this.state.transitionStartOffset + this.state.slideWidth;
-
+    const { easing } = this.props as Required<IProps>;
     const progress = (now - this.state.transitionStart) / ANIMATION_DURATION;
-    const amount = transitionOffset * progress;
+    const amount = transitionOffset * easing(progress);
 
     const offset = this.state.transitionStartOffset - amount;
 
