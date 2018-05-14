@@ -13,7 +13,9 @@ _Checkout the demo_
 - [Examples](#examples)
 - [Dependencies](#dependencies)
 - [API](#api)
+- [Browser support](#browser-support)
 - [Changelog](#changelog)
+- [Contributing](#contributing)
 - [Licence](#licence)
 
 ## Installing
@@ -66,12 +68,27 @@ __React__ is the only dependency for this component.
 
 ## API
 
+## Browser support
+
+This library depends on `requestAnimationFrame` and `performance.now`, so make sure your targets support them.
+
+- Chrome
+- Firefox
+- IE
+- Safari
+
+## Changelog
+
 ### props
 
 | prop name | Required?   | Default value | Notes                                                                    |
 |-----------|:-----------:|:-------------:|--------------------------------------------------------------------------|
 | loop      | no          | false         | Whether it should go to the first slide after the last one or vice versa |
 | animate   | no          | true          | Whether it should animate transition when use let goes of the slide      |
+
+## Contributing
+
+Contributions are always welcome! Either in the issue section or as a PR.
 
 ## Licence
 

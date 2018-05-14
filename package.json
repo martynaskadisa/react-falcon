@@ -13,6 +13,9 @@
     "test": "react-scripts-ts test --env=jsdom",
     "eject": "react-scripts-ts eject"
   },
+  "peerDependencies": {
+    "react": "^16.0.0"
+  },
   "devDependencies": {
     "@types/jest": "^22.2.3",
     "@types/node": "^10.0.4",
