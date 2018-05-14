@@ -1,3 +1,4 @@
+// tslint:disable:no-console
 import * as React from 'react';
 import { calculateTransitionOffset, getVisibleChildren, noop } from './utils';
 
@@ -25,6 +26,8 @@ interface IState {
   isInteracting: boolean;
   isTransitioning: boolean;
   startX?: number;
+  prevStartX?: number;
+  prevOffset?: number;
   offset: number;
   transitionStart: number;
   transitionStartOffset: number;
@@ -44,7 +47,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
     loop: false,
     onChange: noop,
     overscanCount: 3,
-    slideThreshold: 50
+    slideThreshold: 75
   };
 
   private currentSlideRef = React.createRef<HTMLDivElement>();
@@ -59,6 +62,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
       isTransitioning: false,
       nextIndex: -1,
       offset: 0,
+      prevOffset: undefined,
+      prevStartX: undefined,
       slideWidth: -1,
       startX: undefined,
       transitionStart: 0,
@@ -86,6 +91,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
       loop
     );
 
+    console.log(offset);
+
     return (
       <div
         ref={this.currentSlideRef}
@@ -94,7 +101,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
           display: 'block',
           overflow: 'hidden',
           position: 'relative',
-          touchAction: 'pan-y',
+          touchAction: 'pan-x',
+          userSelect: 'none',
           willChange:
             isInteracting || isTransitioning ? 'transform' : undefined,
           ...style
@@ -132,12 +140,18 @@ class Carousel extends React.PureComponent<IProps, IState> {
       window.cancelAnimationFrame(this.rAFHandle);
       return this.setState({
         isInteracting: true,
-        offset: this.state.offset,
-        startX: this.state.offset
+        prevOffset: this.state.offset,
+        prevStartX: this.state.startX,
+        startX
       });
     }
 
-    this.setState({ isInteracting: true, startX, offset: 0 });
+    this.setState({
+      isInteracting: true,
+      offset: 0,
+      prevStartX: undefined,
+      startX
+    });
   }
 
   private handleInteractionEnd() {
@@ -153,7 +167,20 @@ class Carousel extends React.PureComponent<IProps, IState> {
       return;
     }
 
-    this.setState({ offset: x - this.state.startX });
+    const offset = x - this.state.startX;
+
+    if (
+      typeof this.state.prevStartX === 'number' &&
+      typeof this.state.prevOffset === 'number'
+    ) {
+      // const deltaStartX = this.state.startX - this.state.prevStartX;
+
+      return this.setState({
+        offset: this.state.prevOffset + offset
+      });
+    }
+
+    this.setState({ offset });
   }
 
   private handleTouchStart(e: React.TouchEvent<HTMLDivElement>): void {

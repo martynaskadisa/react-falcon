@@ -22,16 +22,16 @@ function* imageGenerator() {
 
 const getImage = imageGenerator();
 const getColor = colorGenerator();
-const colors = (Array.apply(null, { length: 1000 }) as undefined[]).map(
+const colors = (Array.apply(null, { length: 5 }) as undefined[]).map(
   () => getColor.next().value
 );
 
-const images = (Array.apply(null, { length: 7 }) as undefined[]).map(
+const images = (Array.apply(null, { length: 1000 }) as undefined[]).map(
   () => getImage.next().value
 );
 
 const ConnectedColorCarousel: React.SFC = () => (
-  <Carousel style={{ width: 300, height: 300 }}>
+  <Carousel style={{ width: 300, height: 300 }} loop={true}>
     {colors.map((color, i) => (
       <ColorSlide key={i} color={color}>
         {i}

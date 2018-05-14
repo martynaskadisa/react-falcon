@@ -26,10 +26,7 @@ export const getVisibleChildren = (
     ];
   }
 
-  return React.Children.toArray(children).slice(
-    activeIndex - 1,
-    activeIndex - 1 + overscanCount
-  );
+  return childrenArray.slice(activeIndex - 1, activeIndex - 1 + overscanCount);
 };
 
 export const calculateTransitionOffset = (
@@ -37,7 +34,7 @@ export const calculateTransitionOffset = (
   nextIndex: number,
   startOffset: number,
   width: number
-) => {
+): number => {
   if (index === nextIndex) {
     return startOffset;
   }
