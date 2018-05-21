@@ -80,3 +80,29 @@ export const calculateTransitionOffset = (
     ? startOffset + width
     : startOffset - width;
 };
+
+export const getTransitionIndex = (
+  offset: number,
+  threshold: number,
+  count: number,
+  currentIndex: number,
+  loop = false
+): number => {
+  if (offset >= threshold) {
+    if (currentIndex === 0) {
+      return loop ? count - 1 : currentIndex;
+    }
+
+    return currentIndex - 1;
+  }
+
+  if (offset <= -threshold) {
+    if (currentIndex === count - 1) {
+      return loop ? 0 : currentIndex;
+    }
+
+    return currentIndex + 1;
+  }
+
+  return currentIndex;
+};

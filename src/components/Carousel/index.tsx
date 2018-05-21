@@ -1,5 +1,10 @@
 import * as React from 'react';
-import { calculateTransitionOffset, getVisibleChildren, noop } from './utils';
+import {
+  calculateTransitionOffset,
+  getTransitionIndex,
+  getVisibleChildren,
+  noop
+} from './utils';
 
 export interface IProps {
   defaultIndex?: number;
@@ -164,7 +169,18 @@ class Carousel extends React.PureComponent<IProps, IState> {
       return;
     }
 
-    this.slideTo(this.getTransitionIndex());
+    const { slideThreshold, loop } = this.props as Required<IProps>;
+    const { offset, index } = this.state;
+
+    this.slideTo(
+      getTransitionIndex(
+        offset,
+        slideThreshold,
+        React.Children.count(this.props.children),
+        index,
+        loop
+      )
+    );
   }
 
   private handleInteractionMove(x: number): void {
@@ -226,30 +242,6 @@ class Carousel extends React.PureComponent<IProps, IState> {
     }
 
     return this.state.index - 1;
-  }
-
-  private getTransitionIndex(): number {
-    const { slideThreshold } = this.props as Required<IProps>;
-
-    if (this.state.offset >= slideThreshold) {
-      if (this.state.index === 0) {
-        return this.props.loop
-          ? React.Children.count(this.props.children) - 1
-          : this.state.index;
-      }
-
-      return this.state.index - 1;
-    }
-
-    if (this.state.offset <= -slideThreshold) {
-      if (this.state.index === React.Children.count(this.props.children) - 1) {
-        return this.props.loop ? 0 : this.state.index;
-      }
-
-      return this.state.index + 1;
-    }
-
-    return this.state.index;
   }
 
   private slideTo(index: number) {
