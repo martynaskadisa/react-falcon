@@ -2,7 +2,6 @@ import * as React from 'react';
 import './App.css';
 import ColorSlide from './ColorSlide';
 import Carousel from './components/Carousel';
-
 import logo from './logo.svg';
 
 function* colorGenerator() {
@@ -33,7 +32,7 @@ const images = (Array.apply(null, { length: 1000 }) as undefined[]).map(
 const ConnectedColorCarousel: React.SFC = () => (
   <Carousel style={{ width: 300, height: 300 }} loop={true}>
     {colors.map((color, i) => (
-      <ColorSlide key={i} color={color}>
+      <ColorSlide key={`color-${color}`} color={color}>
         {i}
       </ColorSlide>
     ))}

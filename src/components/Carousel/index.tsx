@@ -1,4 +1,3 @@
-// tslint:disable:no-console
 import * as React from 'react';
 import { calculateTransitionOffset, getVisibleChildren, noop } from './utils';
 
@@ -19,6 +18,7 @@ export interface IProps {
    * defaults to linear easing `(f) => f`
    */
   easing?: (progress: number) => number;
+  animationDuration?: number;
 }
 
 interface IState {
@@ -35,13 +35,12 @@ interface IState {
   slideWidth: number;
 }
 
-const ANIMATION_DURATION = 250;
-
 const linearEasing = (t: number) => t;
 
 class Carousel extends React.PureComponent<IProps, IState> {
   public static defaultProps: Partial<IProps> = {
     animate: true,
+    animationDuration: 250,
     defaultIndex: 0,
     easing: linearEasing,
     loop: false,
@@ -50,7 +49,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
     slideThreshold: 75
   };
 
-  private currentSlideRef = React.createRef<HTMLDivElement>();
+  private rootElmRef = React.createRef<HTMLDivElement>();
   private rAFHandle: number;
 
   constructor(props: Required<IProps>) {
@@ -86,16 +85,14 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
     const visibleChildren = getVisibleChildren(
       children,
-      index,
+      this.props.index || index,
       overscanCount,
       loop
     );
 
-    console.log(offset);
-
     return (
       <div
-        ref={this.currentSlideRef}
+        ref={this.rootElmRef}
         style={{
           cursor: isInteracting ? 'grabbing' : 'grab',
           display: 'block',
@@ -118,7 +115,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
       >
         {visibleChildren.map((child, i) => (
           <div
-            key={i}
+            key={(child && typeof child === 'object' && child.key) || i}
             style={{
               height: '100%',
               pointerEvents: 'none',
@@ -133,6 +130,14 @@ class Carousel extends React.PureComponent<IProps, IState> {
         ))}
       </div>
     );
+  }
+
+  public next() {
+    this.slideTo(this.getNextIndex());
+  }
+
+  public prev() {
+    this.slideTo(this.getPrevIndex());
   }
 
   private handleInteractionStart(startX: number): void {
@@ -159,7 +164,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
       return;
     }
 
-    this.slideTo(this.getNextIndex());
+    this.slideTo(this.getTransitionIndex());
   }
 
   private handleInteractionMove(x: number): void {
@@ -173,8 +178,6 @@ class Carousel extends React.PureComponent<IProps, IState> {
       typeof this.state.prevStartX === 'number' &&
       typeof this.state.prevOffset === 'number'
     ) {
-      // const deltaStartX = this.state.startX - this.state.prevStartX;
-
       return this.setState({
         offset: this.state.prevOffset + offset
       });
@@ -207,8 +210,27 @@ class Carousel extends React.PureComponent<IProps, IState> {
     this.handleInteractionMove(e.clientX);
   }
 
-  private getNextIndex() {
+  private getNextIndex(): number {
+    if (this.state.index === React.Children.count(this.props.children)) {
+      return this.props.loop ? 0 : this.state.index;
+    }
+
+    return this.state.index + 1;
+  }
+
+  private getPrevIndex(): number {
+    const count = React.Children.count(this.props.children);
+
+    if (this.state.index === 0) {
+      return this.props.loop ? count - 1 : 0;
+    }
+
+    return this.state.index - 1;
+  }
+
+  private getTransitionIndex(): number {
     const { slideThreshold } = this.props as Required<IProps>;
+
     if (this.state.offset >= slideThreshold) {
       if (this.state.index === 0) {
         return this.props.loop
@@ -231,16 +253,21 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private slideTo(index: number) {
-    if (!this.props.animate || !this.currentSlideRef.current) {
-      return this.setState({
-        index,
-        isInteracting: false,
-        offset: 0,
-        startX: undefined
-      });
+    const { animate, onChange } = this.props as Required<IProps>;
+
+    if (!animate || !this.rootElmRef.current) {
+      return this.setState(
+        {
+          index,
+          isInteracting: false,
+          offset: 0,
+          startX: undefined
+        },
+        () => onChange(index)
+      );
     }
 
-    const rect = this.currentSlideRef.current.getBoundingClientRect();
+    const rect = this.rootElmRef.current.getBoundingClientRect();
 
     this.setState(
       {
@@ -260,26 +287,33 @@ class Carousel extends React.PureComponent<IProps, IState> {
       return;
     }
 
+    const { onChange, animationDuration, easing } = this.props as Required<
+      IProps
+    >;
+
     const now = window.performance.now();
 
-    if (now - this.state.transitionStart > ANIMATION_DURATION) {
-      return this.setState({
-        index: this.state.nextIndex,
-        isTransitioning: false,
-        nextIndex: -1,
-        offset: 0
-      });
+    if (now - this.state.transitionStart > animationDuration) {
+      return this.setState(
+        {
+          index: this.state.nextIndex,
+          isTransitioning: false,
+          nextIndex: -1,
+          offset: 0
+        },
+        () => onChange(this.state.index)
+      );
     }
 
     const transitionOffset = calculateTransitionOffset(
       this.state.index,
       this.state.nextIndex,
       this.state.transitionStartOffset,
-      this.state.slideWidth
+      this.state.slideWidth,
+      React.Children.count(this.props.children)
     );
 
-    const { easing } = this.props as Required<IProps>;
-    const progress = (now - this.state.transitionStart) / ANIMATION_DURATION;
+    const progress = (now - this.state.transitionStart) / animationDuration;
     const amount = transitionOffset * easing(progress);
 
     const offset = this.state.transitionStartOffset - amount;
