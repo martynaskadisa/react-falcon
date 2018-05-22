@@ -107,7 +107,40 @@ export const getTransitionIndex = (
   return currentIndex;
 };
 
+export const getPrevIndex = (
+  currentIndex: number,
+  count: number,
+  loop = false
+): number => {
+  if (currentIndex === 0) {
+    return loop ? count - 1 : 0;
+  }
+
+  return currentIndex - 1;
+};
+
+export const getNextIndex = (
+  currentIndex: number,
+  count: number,
+  loop = false
+): number => {
+  if (currentIndex === count - 1) {
+    return loop ? 0 : currentIndex;
+  }
+
+  return currentIndex + 1;
+};
+
 export const getChildsKey = (
   child: string | number | React.ReactElement<any> | null,
   i: number
-) => (child && typeof child === 'object' && child.key) || i;
+): React.Key => (child && typeof child === 'object' && child.key) || i;
+
+export const getTransformStyles = (
+  offset: number,
+  index: number
+): React.CSSProperties => {
+  return {
+    transform: `translate3d(calc(${100 * (index - 1)}% + ${offset}px), 0, 0)`
+  };
+};

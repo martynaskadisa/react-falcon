@@ -4,6 +4,8 @@ import {
   Direction,
   getChildsKey,
   getDirection,
+  getNextIndex,
+  getPrevIndex,
   getVisibleChildren
 } from './utils';
 
@@ -116,6 +118,46 @@ describe('utils', () => {
       const key = getChildsKey(child, i);
 
       expect(key).toEqual(i);
+    });
+  });
+
+  describe('#getPrevIndex', () => {
+    it('should decrement', () => {
+      const index = getPrevIndex(1, 2);
+
+      expect(index).toEqual(0);
+    });
+
+    it('should return the same index if not looping and current index is equal to 0', () => {
+      const index = getPrevIndex(0, 2);
+
+      expect(index).toEqual(0);
+    });
+
+    it('should return last index if looping and current index is equal to 0', () => {
+      const index = getPrevIndex(0, 2, true);
+
+      expect(index).toEqual(1);
+    });
+  });
+
+  describe('#getNextIndex', () => {
+    it('should increment', () => {
+      const index = getNextIndex(0, 2);
+
+      expect(index).toEqual(1);
+    });
+
+    it('should return the same index if not looping and current index is last', () => {
+      const index = getNextIndex(1, 2);
+
+      expect(index).toEqual(1);
+    });
+
+    it('should return first index if looping and current index is last', () => {
+      const index = getNextIndex(1, 2, true);
+
+      expect(index).toEqual(0);
     });
   });
 });

@@ -2,6 +2,9 @@ import * as React from 'react';
 import {
   calculateTransitionOffset,
   getChildsKey,
+  getNextIndex,
+  getPrevIndex,
+  getTransformStyles,
   getTransitionIndex,
   getVisibleChildren,
   noop
@@ -143,9 +146,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
               height: '100%',
               pointerEvents: 'none',
               position: 'absolute',
-              transform: `translate3d(calc(${100 *
-                (i - 1)}% + ${offset}px), 0, 0)`,
-              width: '100%'
+              width: '100%',
+              ...getTransformStyles(offset, i)
             }}
           >
             {child}
@@ -156,11 +158,23 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   public next() {
-    this.slideTo(this.getNextIndex());
+    this.slideTo(
+      getNextIndex(
+        this.state.index,
+        React.Children.count(this.props.children),
+        this.props.loop
+      )
+    );
   }
 
   public prev() {
-    this.slideTo(this.getPrevIndex());
+    this.slideTo(
+      getPrevIndex(
+        this.state.index,
+        React.Children.count(this.props.children),
+        this.props.loop
+      )
+    );
   }
 
   private handleClick(e: React.MouseEvent<HTMLDivElement>) {
@@ -256,26 +270,6 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
   private handleMouseMove(e: React.MouseEvent<HTMLDivElement>): void {
     this.handleInteractionMove(e.clientX);
-  }
-
-  private getNextIndex(): number {
-    const count = React.Children.count(this.props.children);
-
-    if (this.state.index === count - 1) {
-      return this.props.loop ? 0 : this.state.index;
-    }
-
-    return this.state.index + 1;
-  }
-
-  private getPrevIndex(): number {
-    const count = React.Children.count(this.props.children);
-
-    if (this.state.index === 0) {
-      return this.props.loop ? count - 1 : 0;
-    }
-
-    return this.state.index - 1;
   }
 
   private slideTo(index: number) {
