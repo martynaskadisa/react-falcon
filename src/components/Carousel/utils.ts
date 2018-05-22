@@ -1,4 +1,3 @@
-// tslint:disable:no-debugger
 import * as React from 'react';
 
 // tslint:disable-next-line:no-empty

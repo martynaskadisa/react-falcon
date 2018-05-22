@@ -31,7 +31,7 @@ export interface IProps {
   animationDuration?: number;
 }
 
-interface IState {
+export interface IState {
   index: number;
   isInteracting: boolean;
   isTransitioning: boolean;
