@@ -1,15 +1,9 @@
 import * as React from 'react';
 import './App.css';
-import ColorSlide from './ColorSlide';
 import Carousel from './components/Carousel';
+import ControlledCarousel from './ControlledCarousel';
 import logo from './logo.svg';
-
-function* colorGenerator() {
-  const getValue = () => Math.round(255 * Math.random());
-  while (true) {
-    yield `rgb(${getValue()}, ${getValue()}, ${getValue()})`;
-  }
-}
+import UncontrolledCarousel from './UncontrolledCarousel';
 
 function* imageGenerator() {
   while (true) {
@@ -20,23 +14,9 @@ function* imageGenerator() {
 }
 
 const getImage = imageGenerator();
-const getColor = colorGenerator();
-const colors = (Array.apply(null, { length: 5 }) as undefined[]).map(
-  () => getColor.next().value
-);
 
-const images = (Array.apply(null, { length: 1000 }) as undefined[]).map(
+const images = (Array.apply(null, { length: 5 }) as undefined[]).map(
   () => getImage.next().value
-);
-
-const ConnectedColorCarousel: React.SFC = () => (
-  <Carousel style={{ width: 300, height: 300 }} loop={true}>
-    {colors.map((color, i) => (
-      <ColorSlide key={`color-${color}`} color={color}>
-        {i}
-      </ColorSlide>
-    ))}
-  </Carousel>
 );
 
 const ConnectedImageCarousel: React.SFC = () => (
@@ -50,9 +30,6 @@ const ConnectedImageCarousel: React.SFC = () => (
     ))}
   </Carousel>
 );
-
-const createArray = (length: number): undefined[] =>
-  Array.apply(null, { length }) as undefined[];
 
 interface IState {
   count: number;
@@ -77,10 +54,18 @@ class App extends React.Component<{}, IState> {
         </header>
         <div className="App-body">
           <button onClick={this.handleClick}>Add 10</button>
-          {createArray(this.state.count).map((_, i) => (
-            <ConnectedColorCarousel key={i} />
-          ))}
-          <ConnectedImageCarousel />
+          <div>
+            <h3>Uncontrolled example</h3>
+            <UncontrolledCarousel />
+          </div>
+          <div>
+            <h3>Controlled example</h3>
+            <ControlledCarousel />
+          </div>
+          <div>
+            <h3>Uncontrolled w/ images</h3>
+            <ConnectedImageCarousel />
+          </div>
         </div>
       </div>
     );

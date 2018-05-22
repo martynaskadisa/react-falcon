@@ -36,6 +36,7 @@ interface IState {
   offset: number;
   transitionStart: number;
   transitionStartOffset: number;
+  transitionEndOffset: number;
   nextIndex: number;
   slideWidth: number;
 }
@@ -54,6 +55,19 @@ class Carousel extends React.PureComponent<IProps, IState> {
     slideThreshold: 75
   };
 
+  public static getDerivedStateFromProps(
+    nextProps: IProps
+    // prevState: IState
+  ): Partial<IState> | null {
+    if (typeof nextProps.index === 'number') {
+      return {
+        index: nextProps.index
+      };
+    }
+
+    return null;
+  }
+
   private rootElmRef = React.createRef<HTMLDivElement>();
   private rAFHandle: number;
 
@@ -61,7 +75,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
     super(props);
 
     this.state = {
-      index: props.defaultIndex,
+      index: props.index || props.defaultIndex,
       isInteracting: false,
       isTransitioning: false,
       nextIndex: -1,
@@ -70,6 +84,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
       prevStartX: undefined,
       slideWidth: -1,
       startX: undefined,
+      transitionEndOffset: 0,
       transitionStart: 0,
       transitionStartOffset: 0
     };
@@ -81,6 +96,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
     this.handleMouseUp = this.handleMouseUp.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.transition = this.transition.bind(this);
+    (window as any).slideTo = this.slideTo.bind(this);
   }
 
   public render() {
@@ -227,7 +243,9 @@ class Carousel extends React.PureComponent<IProps, IState> {
   }
 
   private getNextIndex(): number {
-    if (this.state.index === React.Children.count(this.props.children)) {
+    const count = React.Children.count(this.props.children);
+
+    if (this.state.index === count - 1) {
       return this.props.loop ? 0 : this.state.index;
     }
 
@@ -261,12 +279,21 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
     const rect = this.rootElmRef.current.getBoundingClientRect();
 
+    const transitionOffset = calculateTransitionOffset(
+      this.state.index,
+      index,
+      this.state.offset,
+      rect.width,
+      React.Children.count(this.props.children)
+    );
+
     this.setState(
       {
         isInteracting: false,
         isTransitioning: true,
         nextIndex: index,
         slideWidth: rect.width,
+        transitionEndOffset: transitionOffset,
         transitionStart: window.performance.now(),
         transitionStartOffset: this.state.offset
       },
@@ -297,16 +324,8 @@ class Carousel extends React.PureComponent<IProps, IState> {
       );
     }
 
-    const transitionOffset = calculateTransitionOffset(
-      this.state.index,
-      this.state.nextIndex,
-      this.state.transitionStartOffset,
-      this.state.slideWidth,
-      React.Children.count(this.props.children)
-    );
-
     const progress = (now - this.state.transitionStart) / animationDuration;
-    const amount = transitionOffset * easing(progress);
+    const amount = this.state.transitionEndOffset * easing(progress);
 
     const offset = this.state.transitionStartOffset - amount;
 
