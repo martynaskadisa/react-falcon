@@ -38,7 +38,6 @@ interface IState {
   transitionStartOffset: number;
   transitionEndOffset: number;
   nextIndex: number;
-  slideWidth: number;
 }
 
 const linearEasing = (t: number) => t;
@@ -82,7 +81,6 @@ class Carousel extends React.PureComponent<IProps, IState> {
       offset: 0,
       prevOffset: undefined,
       prevStartX: undefined,
-      slideWidth: -1,
       startX: undefined,
       transitionEndOffset: 0,
       transitionStart: 0,
@@ -292,7 +290,6 @@ class Carousel extends React.PureComponent<IProps, IState> {
         isInteracting: false,
         isTransitioning: true,
         nextIndex: index,
-        slideWidth: rect.width,
         transitionEndOffset: transitionOffset,
         transitionStart: window.performance.now(),
         transitionStartOffset: this.state.offset
