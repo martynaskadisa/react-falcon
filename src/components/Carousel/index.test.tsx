@@ -198,4 +198,106 @@ describe('<Carousel />', () => {
     const state = carousel.state() as IState;
     expect(state.index).toBe(0);
   });
+
+  it('should loop to last slide when swiping right from first slide (mouse)', () => {
+    const threshold = 50;
+    const carousel = mount(
+      <Carousel loop={true} slideThreshold={50}>
+        <div />
+        <div />
+        <div />
+      </Carousel>
+    );
+
+    carousel.simulate('mousedown', createMouseEventPayload({ clientX: 100 }));
+    carousel.simulate(
+      'mousemove',
+      createMouseEventPayload({ clientX: 100 + threshold })
+    );
+    carousel.simulate('mouseup');
+
+    jest.runAllTimers();
+
+    const state = carousel.state() as IState;
+
+    expect(state.index).toEqual(2);
+  });
+
+  it('should loop to last slide when swiping right from first slide (touch)', () => {
+    const threshold = 50;
+    const carousel = mount(
+      <Carousel loop={true} slideThreshold={50}>
+        <div />
+        <div />
+        <div />
+      </Carousel>
+    );
+
+    carousel.simulate(
+      'touchstart',
+      createTouchEventPayload({ touches: [{ clientX: 100 }] })
+    );
+    carousel.simulate(
+      'touchmove',
+      createTouchEventPayload({ touches: [{ clientX: 100 + threshold }] })
+    );
+    carousel.simulate('touchend');
+
+    jest.runAllTimers();
+
+    const state = carousel.state() as IState;
+
+    expect(state.index).toEqual(2);
+  });
+
+  it('should loop to first slide when swiping right from last slide (mouse)', () => {
+    const threshold = 50;
+    const carousel = mount(
+      <Carousel loop={true} slideThreshold={50} defaultIndex={2}>
+        <div />
+        <div />
+        <div />
+      </Carousel>
+    );
+
+    carousel.simulate('mousedown', createMouseEventPayload({ clientX: 100 }));
+    carousel.simulate(
+      'mousemove',
+      createMouseEventPayload({ clientX: 100 - threshold })
+    );
+    carousel.simulate('mouseup');
+
+    jest.runAllTimers();
+
+    const state = carousel.state() as IState;
+
+    expect(state.index).toEqual(0);
+  });
+
+  it('should loop to first slide when swiping right from last slide (touch)', () => {
+    const threshold = 50;
+    const carousel = mount(
+      <Carousel loop={true} slideThreshold={50} defaultIndex={2}>
+        <div />
+        <div />
+        <div />
+      </Carousel>
+    );
+
+    carousel.simulate(
+      'touchstart',
+      createTouchEventPayload({ touches: [{ clientX: 100 }] })
+    );
+    carousel.simulate(
+      'touchmove',
+      createTouchEventPayload({ touches: [{ clientX: 100 - threshold }] })
+    );
+    carousel.simulate('touchend');
+
+    jest.runAllTimers();
+
+    const state = carousel.state() as IState;
+
+    expect(state.index).toEqual(0);
+  });
 });
