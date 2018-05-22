@@ -8,6 +8,7 @@ const getColor = colorGenerator();
 interface IState {
   index: number;
   colors: string[];
+  loop: boolean;
 }
 
 class ControlledCarousel extends React.PureComponent<{}, IState> {
@@ -15,7 +16,8 @@ class ControlledCarousel extends React.PureComponent<{}, IState> {
     colors: (Array.apply(null, { length: 5 }) as undefined[]).map(
       () => getColor.next().value
     ),
-    index: 0
+    index: 0,
+    loop: false
   };
   private carouselRef = React.createRef<Carousel>();
 
@@ -24,34 +26,68 @@ class ControlledCarousel extends React.PureComponent<{}, IState> {
 
     this.handlePrevClick = this.handlePrevClick.bind(this);
     this.handleNextClick = this.handleNextClick.bind(this);
+    this.toggleLoop = this.toggleLoop.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
   }
 
   public render() {
-    const { index, colors } = this.state;
+    const { index, colors, loop } = this.state;
 
     return (
-      <div
-        style={{
-          alignItems: 'center',
-          display: 'flex',
-          justifyContent: 'center'
-        }}
-      >
-        <button onClick={this.handlePrevClick}>Prev</button>
-        <Carousel
-          ref={this.carouselRef}
-          style={{ width: 300, height: 300 }}
-          index={index}
+      <div>
+        <div
+          style={{
+            alignItems: 'flex-start',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start'
+          }}
         >
-          {colors.map((color, i) => (
-            <ColorSlide key={`color-${color}`} color={color}>
-              {i}
-            </ColorSlide>
-          ))}
-        </Carousel>
-        <button onClick={this.handleNextClick}>Next</button>
+          <label>
+            <input type="checkbox" checked={loop} onChange={this.toggleLoop} />
+            loop
+          </label>
+          <label>
+            active index:
+            <input
+              type="number"
+              value={index}
+              onChange={this.handleInputChange}
+            />
+          </label>
+        </div>
+        <div
+          style={{
+            alignItems: 'center',
+            display: 'flex',
+            justifyContent: 'center'
+          }}
+        >
+          <button onClick={this.handlePrevClick}>Prev</button>
+          <Carousel
+            ref={this.carouselRef}
+            style={{ width: 300, height: 300 }}
+            index={index}
+            loop={loop}
+          >
+            {colors.map((color, i) => (
+              <ColorSlide key={`color-${color}`} color={color}>
+                {i}
+              </ColorSlide>
+            ))}
+          </Carousel>
+          <button onClick={this.handleNextClick}>Next</button>
+        </div>
       </div>
     );
+  }
+
+  private handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    this.setState({ index: parseInt(e.target.value, 10) });
+  }
+
+  private toggleLoop() {
+    this.setState({ loop: !this.state.loop });
   }
 
   private handlePrevClick() {

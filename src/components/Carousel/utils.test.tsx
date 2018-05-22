@@ -2,18 +2,10 @@ import * as React from 'react';
 import {
   calculateTransitionOffset,
   Direction,
+  getChildsKey,
   getDirection,
   getVisibleChildren
 } from './utils';
-
-const oneChild: React.ReactNode = <div />;
-const fiveChildren: React.ReactNode = [
-  <div key={0} />,
-  <div key={1} />,
-  <div key={2} />,
-  <div key={3} />,
-  <div key={4} />
-];
 
 describe('utils', () => {
   describe('#getDirection', () => {
@@ -67,6 +59,13 @@ describe('utils', () => {
 
   describe('#getVisibleChildren', () => {
     it('should filter not visible children', () => {
+      const fiveChildren: React.ReactNode = [
+        <div key={0} />,
+        <div key={1} />,
+        <div key={2} />,
+        <div key={3} />,
+        <div key={4} />
+      ];
       const activeIndex = 0;
       const overscanCount = 3;
       const visibleChildren = getVisibleChildren(
@@ -80,6 +79,7 @@ describe('utils', () => {
     });
 
     it('should not filter when children length is less than overscan count', () => {
+      const oneChild: React.ReactNode = <div />;
       const activeIndex = 0;
       const overscanCount = 3;
       const visibleChildren = getVisibleChildren(
@@ -90,6 +90,32 @@ describe('utils', () => {
       );
 
       expect(visibleChildren).toHaveLength(1);
+    });
+  });
+
+  describe('#getChildsKey', () => {
+    it("should return childs key if it's a React element and it has a key", () => {
+      const testKey = 'test';
+      const child = <div key={testKey} />;
+      const key = getChildsKey(child, 0);
+
+      expect(key).toEqual(testKey);
+    });
+
+    it("should return `i` if it's a React element but has no key", () => {
+      const child = <div />;
+      const i = 0;
+      const key = getChildsKey(child, i);
+
+      expect(key).toEqual(i);
+    });
+
+    it("should return `i` if it's not a React element", () => {
+      const child = 'hello world';
+      const i = 0;
+      const key = getChildsKey(child, i);
+
+      expect(key).toEqual(i);
     });
   });
 });

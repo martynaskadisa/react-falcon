@@ -9,7 +9,7 @@ const colors = (Array.apply(null, { length: 5 }) as undefined[]).map(
 );
 
 const UncontrolledCarousel: React.SFC = () => (
-  <Carousel style={{ width: 300, height: 300 }}>
+  <Carousel style={{ width: 300, height: 300 }} onClick={console.log}>
     {colors.map((color, i) => (
       <ColorSlide key={`color-${color}`} color={color}>
         {i}

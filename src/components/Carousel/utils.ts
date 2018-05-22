@@ -106,3 +106,8 @@ export const getTransitionIndex = (
 
   return currentIndex;
 };
+
+export const getChildsKey = (
+  child: string | number | React.ReactElement<any> | null,
+  i: number
+) => (child && typeof child === 'object' && child.key) || i;

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {
   calculateTransitionOffset,
+  getChildsKey,
   getTransitionIndex,
   getVisibleChildren,
   noop
@@ -17,6 +18,7 @@ export interface IProps {
   loop?: boolean;
   animate?: boolean;
   slideThreshold?: number;
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
   /**
    * Allows providing custom easing function
    *
@@ -50,6 +52,7 @@ class Carousel extends React.PureComponent<IProps, IState> {
     easing: linearEasing,
     loop: false,
     onChange: noop,
+    onClick: noop,
     overscanCount: 3,
     slideThreshold: 75
   };
@@ -87,14 +90,14 @@ class Carousel extends React.PureComponent<IProps, IState> {
       transitionStartOffset: 0
     };
 
+    this.handleClick = this.handleClick.bind(this);
     this.handleMouseDown = this.handleMouseDown.bind(this);
-    this.handleTouchStart = this.handleTouchStart.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handleMouseUp = this.handleMouseUp.bind(this);
     this.handleTouchEnd = this.handleTouchEnd.bind(this);
     this.handleTouchMove = this.handleTouchMove.bind(this);
-    this.handleMouseUp = this.handleMouseUp.bind(this);
-    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handleTouchStart = this.handleTouchStart.bind(this);
     this.transition = this.transition.bind(this);
-    (window as any).slideTo = this.slideTo.bind(this);
   }
 
   public render() {
@@ -124,17 +127,18 @@ class Carousel extends React.PureComponent<IProps, IState> {
           ...style
         }}
         className={className}
-        onTouchStart={this.handleTouchStart}
+        onClick={this.handleClick}
+        onMouseDown={this.handleMouseDown}
+        onMouseMove={this.handleMouseMove}
+        onMouseOut={this.handleMouseUp}
+        onMouseUp={this.handleMouseUp}
         onTouchEnd={this.handleTouchEnd}
         onTouchMove={this.handleTouchMove}
-        onMouseDown={this.handleMouseDown}
-        onMouseUp={this.handleMouseUp}
-        onMouseOut={this.handleMouseUp}
-        onMouseMove={this.handleMouseMove}
+        onTouchStart={this.handleTouchStart}
       >
         {visibleChildren.map((child, i) => (
           <div
-            key={(child && typeof child === 'object' && child.key) || i}
+            key={getChildsKey(child, i)}
             style={{
               height: '100%',
               pointerEvents: 'none',
@@ -157,6 +161,14 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
   public prev() {
     this.slideTo(this.getPrevIndex());
+  }
+
+  private handleClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (this.state.isTransitioning) {
+      return;
+    }
+
+    (this.props as Required<IProps>).onClick(e);
   }
 
   private handleInteractionStart(startX: number): void {
@@ -185,6 +197,12 @@ class Carousel extends React.PureComponent<IProps, IState> {
 
     const { slideThreshold, loop } = this.props as Required<IProps>;
     const { offset, index } = this.state;
+
+    if (offset === 0) {
+      return this.setState({
+        isInteracting: false
+      });
+    }
 
     this.slideTo(
       getTransitionIndex(
