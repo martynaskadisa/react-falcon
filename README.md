@@ -66,8 +66,6 @@ export default App
 
 __React__ is the only dependency for this component.
 
-## API
-
 ## Browser support
 
 This library depends on `requestAnimationFrame` and `performance.now`, so make sure your targets support them.
@@ -78,6 +76,8 @@ This library depends on `requestAnimationFrame` and `performance.now`, so make s
 - Safari
 
 ## Changelog
+
+## API
 
 ### props
 
