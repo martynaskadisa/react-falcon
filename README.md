@@ -1,4 +1,4 @@
-# react-falcon
+# react-falcon - Beware, this is a work in progress
 <!-- Insert CI/npm badges here -->
 
 Lightweight and fast carousel component.
